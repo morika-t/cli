@@ -10,6 +10,7 @@ import (
 	"time"
 	"github.com/codegangsta/cli"
 	"cf"
+	"bufio"
 )
 
 func CaptureOutput(f func ()) string {
@@ -39,6 +40,15 @@ type FakeUI struct {
 	PasswordPrompts []string
 	Inputs  []string
 	FailedWithUsage bool
+}
+
+func (ui *FakeUI) Stream(reader io.Reader) (err error) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		ui.Outputs = append(ui.Outputs,scanner.Text())
+	}
+	err = scanner.Err()
+	return
 }
 
 func (ui *FakeUI) Say(message string, args ...interface{}) {

@@ -73,7 +73,7 @@ func NewFactory(ui terminal.UI, config *configuration.Configuration, configRepo 
 	factory.cmdsByName["unset-env"] = application.NewUnsetEnv(ui, repoLocator.GetApplicationRepository())
 	factory.cmdsByName["update-user-provided-service"] = service.NewUpdateUserProvidedService(ui, repoLocator.GetServiceRepository())
 
-	start := application.NewStart(ui, config, repoLocator.GetApplicationRepository())
+	start := application.NewStart(ui, config, repoLocator.GetApplicationRepository(), repoLocator.GetAppStagingLogRepository())
 	stop := application.NewStop(ui, repoLocator.GetApplicationRepository())
 	restart := application.NewRestart(ui, start, stop)
 

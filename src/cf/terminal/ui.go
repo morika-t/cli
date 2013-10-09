@@ -1,6 +1,7 @@
 package terminal
 
 import (
+	"bufio"
 	"cf"
 	"cf/configuration"
 	"fmt"
@@ -18,6 +19,7 @@ func NotLoggedInText() string {
 }
 
 type UI interface {
+	Stream(reader io.Reader) (err error)
 	Say(message string, args ...interface{})
 	Warn(message string, args ...interface{})
 	Ask(prompt string, args ...interface{}) (answer string)
@@ -37,6 +39,15 @@ type TerminalUI struct {
 }
 
 var Stdin io.Reader = os.Stdin
+
+func (c TerminalUI) Stream(reader io.Reader) (err error) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		c.Say(scanner.Text())
+	}
+	err = scanner.Err()
+	return
+}
 
 func (c TerminalUI) Say(message string, args ...interface{}) {
 	fmt.Printf(message+"\n", args...)

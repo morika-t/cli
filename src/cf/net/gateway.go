@@ -64,18 +64,29 @@ func (gateway Gateway) PerformRequest(request *Request) (apiResponse ApiResponse
 	return
 }
 
-func (gateway Gateway) PerformRequestForResponseBytes(request *Request) (bytes []byte, headers http.Header, apiResponse ApiResponse) {
+func (gateway Gateway) PerformRequestForResponseByteStream(request *Request) (byteStream io.ReadCloser, headers http.Header, apiResponse ApiResponse) {
 	rawResponse, apiResponse := gateway.doRequestHandlingAuth(request)
 	if apiResponse.IsNotSuccessful() {
 		return
 	}
 
-	bytes, err := ioutil.ReadAll(rawResponse.Body)
+	byteStream = rawResponse.Body
+	headers = rawResponse.Header
+
+	return
+}
+
+func (gateway Gateway) PerformRequestForResponseBytes(request *Request) (bytes []byte, headers http.Header, apiResponse ApiResponse) {
+	byteStream, headers, apiResponse := gateway.PerformRequestForResponseByteStream(request)
+	if apiResponse.IsNotSuccessful() {
+		return
+	}
+
+	bytes, err := ioutil.ReadAll(byteStream)
 	if err != nil {
 		apiResponse = NewApiResponseWithError("Error reading response", err)
 	}
 
-	headers = rawResponse.Header
 	return
 }
 

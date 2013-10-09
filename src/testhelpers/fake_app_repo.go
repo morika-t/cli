@@ -14,6 +14,7 @@ type FakeApplicationRepository struct {
 	StartAppToStart cf.Application
 	StartAppErr     bool
 	StartUpdatedApp cf.Application
+	StartLogUrl string
 
 	StopAppToStop  cf.Application
 	StopAppErr     bool
@@ -97,12 +98,15 @@ func (repo *FakeApplicationRepository) Scale(app cf.Application) (apiResponse ne
 	return
 }
 
-func (repo *FakeApplicationRepository) Start(app cf.Application) (updatedApp cf.Application, apiResponse net.ApiResponse) {
+func (repo *FakeApplicationRepository) Start(app cf.Application) (updatedApp cf.Application, logUrl string, apiResponse net.ApiResponse) {
 	repo.StartAppToStart = app
 	if repo.StartAppErr {
 		apiResponse = net.NewApiResponseWithMessage("Error starting application")
 	}
+
 	updatedApp = repo.StartUpdatedApp
+	logUrl = repo.StartLogUrl
+
 	return
 }
 

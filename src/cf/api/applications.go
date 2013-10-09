@@ -20,7 +20,7 @@ type ApplicationRepository interface {
 	Delete(app cf.Application) (apiResponse net.ApiResponse)
 	Rename(app cf.Application, newName string) (apiResponse net.ApiResponse)
 	Scale(app cf.Application) (apiResponse net.ApiResponse)
-	Start(app cf.Application) (updatedApp cf.Application, apiResponse net.ApiResponse)
+	Start(app cf.Application) (updatedApp cf.Application, logUrl string, apiResponse net.ApiResponse)
 	Stop(app cf.Application) (updatedApp cf.Application, apiResponse net.ApiResponse)
 	GetInstances(app cf.Application) (instances []cf.ApplicationInstance, apiResponse net.ApiResponse)
 }
@@ -206,7 +206,7 @@ func (repo CloudControllerApplicationRepository) Scale(app cf.Application) (apiR
 	return
 }
 
-func (repo CloudControllerApplicationRepository) Start(app cf.Application) (updatedApp cf.Application, apiResponse net.ApiResponse) {
+func (repo CloudControllerApplicationRepository) Start(app cf.Application) (updatedApp cf.Application, logUrl string, apiResponse net.ApiResponse) {
 	updates := map[string]interface{}{"state": "STARTED"}
 	if app.BuildpackUrl != "" {
 		updates["buildpack"] = app.BuildpackUrl
@@ -215,7 +215,8 @@ func (repo CloudControllerApplicationRepository) Start(app cf.Application) (upda
 }
 
 func (repo CloudControllerApplicationRepository) Stop(app cf.Application) (updatedApp cf.Application, apiResponse net.ApiResponse) {
-	return repo.updateApplication(app, map[string]interface{}{"state": "STOPPED"})
+	updatedApp, _, apiResponse = repo.updateApplication(app, map[string]interface{}{"state": "STOPPED"})
+	return
 }
 
 type InstancesApiResponse map[string]InstanceApiResponse
@@ -254,7 +255,7 @@ func (repo CloudControllerApplicationRepository) GetInstances(app cf.Application
 	return
 }
 
-func (repo CloudControllerApplicationRepository) updateApplication(app cf.Application, updates map[string]interface{}) (updatedApp cf.Application, apiResponse net.ApiResponse) {
+func (repo CloudControllerApplicationRepository) updateApplication(app cf.Application, updates map[string]interface{}) (updatedApp cf.Application, logUrl string, apiResponse net.ApiResponse) {
 	path := fmt.Sprintf("%s/v2/apps/%s", repo.config.Target, app.Guid)
 
 	updates["console"] = true
@@ -266,13 +267,17 @@ func (repo CloudControllerApplicationRepository) updateApplication(app cf.Applic
 	}
 
 	request, apiResponse := repo.gateway.NewRequest("PUT", path, repo.config.AccessToken, bytes.NewReader(body))
-
 	if apiResponse.IsNotSuccessful() {
 		return
 	}
 
 	response := ApplicationResource{}
-	_, apiResponse = repo.gateway.PerformRequestForJSONResponse(request, &response)
+	headers, apiResponse := repo.gateway.PerformRequestForJSONResponse(request, &response)
+	if apiResponse.IsNotSuccessful() {
+		return
+	}
+
+	logUrl = headers.Get("x-app-staging-log")
 
 	updatedApp = cf.Application{
 		Name:  response.Entity.Name,

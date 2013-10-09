@@ -14,22 +14,24 @@ import (
 )
 
 type Start struct {
-	ui        terminal.UI
-	config    *configuration.Configuration
-	appRepo   api.ApplicationRepository
-	startTime time.Time
-	appReq    requirements.ApplicationRequirement
+	ui             terminal.UI
+	config         *configuration.Configuration
+	appRepo        api.ApplicationRepository
+	stagingLogRepo api.AppStagingLogRepository
+	startTime      time.Time
+	appReq         requirements.ApplicationRequirement
 }
 
 type ApplicationStarter interface {
 	ApplicationStart(cf.Application) (startedApp cf.Application, err error)
 }
 
-func NewStart(ui terminal.UI, config *configuration.Configuration, appRepo api.ApplicationRepository) (cmd *Start) {
+func NewStart(ui terminal.UI, config *configuration.Configuration, appRepo api.ApplicationRepository, stagingLogRepo api.AppStagingLogRepository) (cmd *Start) {
 	cmd = new(Start)
 	cmd.ui = ui
 	cmd.config = config
 	cmd.appRepo = appRepo
+	cmd.stagingLogRepo = stagingLogRepo
 
 	return
 }
@@ -59,13 +61,21 @@ func (cmd *Start) ApplicationStart(app cf.Application) (updatedApp cf.Applicatio
 
 	cmd.ui.Say("Starting %s...", terminal.EntityNameColor(app.Name))
 
-	updatedApp, apiResponse := cmd.appRepo.Start(app)
+	updatedApp, logUrl, apiResponse := cmd.appRepo.Start(app)
 	if apiResponse.IsNotSuccessful() {
 		cmd.ui.Failed(apiResponse.Message)
 		return
 	}
 
 	cmd.ui.Ok()
+
+	logReader, apiResponse := cmd.stagingLogRepo.StreamLog(logUrl)
+	if apiResponse.IsNotSuccessful() {
+		cmd.ui.Failed(apiResponse.Message)
+		return
+	}
+
+	cmd.ui.Stream(logReader)
 
 	instances, apiResponse := cmd.appRepo.GetInstances(app)
 
@@ -80,8 +90,6 @@ func (cmd *Start) ApplicationStart(app cf.Application) (updatedApp cf.Applicatio
 		instances, apiResponse = cmd.appRepo.GetInstances(app)
 		cmd.ui.LoadingIndication()
 	}
-
-	cmd.ui.Say("")
 
 	cmd.startTime = time.Now()
 

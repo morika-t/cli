@@ -376,7 +376,10 @@ var startApplicationEndpoint = testhelpers.CreateEndpoint(
 	"PUT",
 	"/v2/apps/my-cool-app-guid",
 	testhelpers.RequestBodyMatcher(`{"console":true,"state":"STARTED"}`),
-	testhelpers.TestResponse{Status: http.StatusCreated, Body: `
+	testhelpers.TestResponse{
+		Status: http.StatusCreated,
+		Header: http.Header{"x-app-staging-log": []string{"/path/to/staging/log"}},
+		Body: `
 {
   "metadata": {
     "guid": "my-updated-app-guid"
@@ -401,9 +404,11 @@ func TestStartApplication(t *testing.T) {
 
 	app := cf.Application{Name: "my-cool-app", Guid: "my-cool-app-guid"}
 
-	updatedApp, apiResponse := repo.Start(app)
+	updatedApp, logUrl, apiResponse := repo.Start(app)
+
 	assert.False(t, apiResponse.IsNotSuccessful())
 	assert.Equal(t, "cli1", updatedApp.Name)
+	assert.Equal(t, logUrl, "/path/to/staging/log")
 	assert.Equal(t, "started", updatedApp.State)
 	assert.Equal(t, "my-updated-app-guid", updatedApp.Guid)
 }

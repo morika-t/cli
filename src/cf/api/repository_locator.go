@@ -9,21 +9,22 @@ import (
 type RepositoryLocator struct {
 	authRepo AuthenticationRepository
 
-	endpointRepo     RemoteEndpointRepository
-	organizationRepo CloudControllerOrganizationRepository
-	spaceRepo        CloudControllerSpaceRepository
-	appRepo          CloudControllerApplicationRepository
-	appBitsRepo      CloudControllerApplicationBitsRepository
-	appSummaryRepo   CloudControllerAppSummaryRepository
-	appEventsRepo    CloudControllerAppEventsRepository
-	appFilesRepo     CloudControllerAppFilesRepository
-	domainRepo       CloudControllerDomainRepository
-	routeRepo        CloudControllerRouteRepository
-	stackRepo        CloudControllerStackRepository
-	serviceRepo      CloudControllerServiceRepository
-	passwordRepo     CloudControllerPasswordRepository
-	logsRepo         LoggregatorLogsRepository
-	authTokenRepo    CloudControllerServiceAuthTokenRepository
+	endpointRepo      RemoteEndpointRepository
+	organizationRepo  CloudControllerOrganizationRepository
+	spaceRepo         CloudControllerSpaceRepository
+	appRepo           CloudControllerApplicationRepository
+	appBitsRepo       CloudControllerApplicationBitsRepository
+	appSummaryRepo    CloudControllerAppSummaryRepository
+	appEventsRepo     CloudControllerAppEventsRepository
+	appStagingLogRepo CloudControllerAppStagingLogRepository
+	appFilesRepo      CloudControllerAppFilesRepository
+	domainRepo        CloudControllerDomainRepository
+	routeRepo         CloudControllerRouteRepository
+	stackRepo         CloudControllerStackRepository
+	serviceRepo       CloudControllerServiceRepository
+	passwordRepo      CloudControllerPasswordRepository
+	logsRepo          LoggregatorLogsRepository
+	authTokenRepo     CloudControllerServiceAuthTokenRepository
 }
 
 func NewRepositoryLocator(config *configuration.Configuration, configRepo configuration.ConfigurationRepository, gatewaysByName map[string]net.Gateway) (loc RepositoryLocator) {
@@ -44,6 +45,7 @@ func NewRepositoryLocator(config *configuration.Configuration, configRepo config
 	loc.appBitsRepo = NewCloudControllerApplicationBitsRepository(config, cloudControllerGateway, cf.ApplicationZipper{})
 	loc.appSummaryRepo = NewCloudControllerAppSummaryRepository(config, cloudControllerGateway, loc.appRepo)
 	loc.appEventsRepo = NewCloudControllerAppEventsRepository(config, cloudControllerGateway)
+	loc.appStagingLogRepo = NewCloudControllerAppStagingLogRepository(config, cloudControllerGateway)
 	loc.appFilesRepo = NewCloudControllerAppFilesRepository(config, cloudControllerGateway)
 	loc.domainRepo = NewCloudControllerDomainRepository(config, cloudControllerGateway)
 	loc.routeRepo = NewCloudControllerRouteRepository(config, cloudControllerGateway, loc.domainRepo)
@@ -86,6 +88,10 @@ func (locator RepositoryLocator) GetAppSummaryRepository() AppSummaryRepository 
 
 func (locator RepositoryLocator) GetAppEventsRepository() AppEventsRepository {
 	return locator.appEventsRepo
+}
+
+func (locator RepositoryLocator) GetAppStagingLogRepository() AppStagingLogRepository {
+	return locator.appStagingLogRepo
 }
 
 func (locator RepositoryLocator) GetAppFilesRepository() AppFilesRepository {
