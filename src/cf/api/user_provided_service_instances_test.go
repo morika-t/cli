@@ -15,7 +15,7 @@ func TestCreateUserProvidedServiceInstance(t *testing.T) {
 	endpoint, status := testapi.CreateCheckableEndpoint(
 		"POST",
 		"/v2/user_provided_service_instances",
-		testapi.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid"}`),
+		testapi.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid","syslog_drain_url":""}`),
 		testapi.TestResponse{Status: http.StatusCreated},
 	)
 
@@ -27,7 +27,28 @@ func TestCreateUserProvidedServiceInstance(t *testing.T) {
 		"user":     "me",
 		"password": "secret",
 	}
-	apiResponse := repo.Create("my-custom-service", params)
+	apiResponse := repo.Create("my-custom-service", params, "")
+	assert.True(t, status.Called())
+	assert.False(t, apiResponse.IsNotSuccessful())
+}
+
+func TestCreateUserProvidedServiceInstanceWithSyslogDrain(t *testing.T) {
+	endpoint, status := testapi.CreateCheckableEndpoint(
+		"POST",
+		"/v2/user_provided_service_instances",
+		testapi.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid","syslog_drain_url":"syslog://example.com"}`),
+		testapi.TestResponse{Status: http.StatusCreated},
+	)
+
+	ts, repo := createUserProvidedServiceInstanceRepo(endpoint)
+	defer ts.Close()
+
+	params := map[string]string{
+		"host":     "example.com",
+		"user":     "me",
+		"password": "secret",
+	}
+	apiResponse := repo.Create("my-custom-service", params, "syslog://example.com")
 	assert.True(t, status.Called())
 	assert.False(t, apiResponse.IsNotSuccessful())
 }
