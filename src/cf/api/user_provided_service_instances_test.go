@@ -8,18 +8,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	testapi "testhelpers/api"
+	testnet "testhelpers/net"
 	"testing"
 )
 
 func TestCreateUserProvidedServiceInstance(t *testing.T) {
-	endpoint, status := testapi.CreateCheckableEndpoint(
-		"POST",
-		"/v2/user_provided_service_instances",
-		testapi.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid","syslog_drain_url":""}`),
-		testapi.TestResponse{Status: http.StatusCreated},
-	)
+	request := testapi.NewCloudControllerTestRequest(testnet.TestRequest{
+		Method:   "POST",
+		Path:     "/v2/user_provided_service_instances",
+		Matcher:  testnet.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid","syslog_drain_url":""}`),
+		Response: testnet.TestResponse{Status: http.StatusCreated},
+	})
 
-	ts, repo := createUserProvidedServiceInstanceRepo(endpoint)
+	ts, handler, repo := createUserProvidedServiceInstanceRepo(t, request)
 	defer ts.Close()
 
 	params := map[string]string{
@@ -28,19 +29,19 @@ func TestCreateUserProvidedServiceInstance(t *testing.T) {
 		"password": "secret",
 	}
 	apiResponse := repo.Create("my-custom-service", params, "")
-	assert.True(t, status.Called())
+	assert.True(t, handler.AllRequestsCalled())
 	assert.False(t, apiResponse.IsNotSuccessful())
 }
 
 func TestCreateUserProvidedServiceInstanceWithSyslogDrain(t *testing.T) {
-	endpoint, status := testapi.CreateCheckableEndpoint(
-		"POST",
-		"/v2/user_provided_service_instances",
-		testapi.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid","syslog_drain_url":"syslog://example.com"}`),
-		testapi.TestResponse{Status: http.StatusCreated},
-	)
+	request := testapi.NewCloudControllerTestRequest(testnet.TestRequest{
+		Method:   "POST",
+		Path:     "/v2/user_provided_service_instances",
+		Matcher:  testnet.RequestBodyMatcher(`{"name":"my-custom-service","credentials":{"host":"example.com","password":"secret","user":"me"},"space_guid":"my-space-guid","syslog_drain_url":"syslog://example.com"}`),
+		Response: testnet.TestResponse{Status: http.StatusCreated},
+	})
 
-	ts, repo := createUserProvidedServiceInstanceRepo(endpoint)
+	ts, handler, repo := createUserProvidedServiceInstanceRepo(t, request)
 	defer ts.Close()
 
 	params := map[string]string{
@@ -49,19 +50,19 @@ func TestCreateUserProvidedServiceInstanceWithSyslogDrain(t *testing.T) {
 		"password": "secret",
 	}
 	apiResponse := repo.Create("my-custom-service", params, "syslog://example.com")
-	assert.True(t, status.Called())
+	assert.True(t, handler.AllRequestsCalled())
 	assert.False(t, apiResponse.IsNotSuccessful())
 }
 
 func TestUpdateUserProvidedServiceInstance(t *testing.T) {
-	endpoint, status := testapi.CreateCheckableEndpoint(
-		"PUT",
-		"/v2/user_provided_service_instances/my-instance-guid",
-		testapi.RequestBodyMatcher(`{"credentials":{"host":"example.com","password":"secret","user":"me"}}`),
-		testapi.TestResponse{Status: http.StatusCreated},
-	)
+	request := testapi.NewCloudControllerTestRequest(testnet.TestRequest{
+		Method:   "PUT",
+		Path:     "/v2/user_provided_service_instances/my-instance-guid",
+		Matcher:  testnet.RequestBodyMatcher(`{"credentials":{"host":"example.com","password":"secret","user":"me"}}`),
+		Response: testnet.TestResponse{Status: http.StatusCreated},
+	})
 
-	ts, repo := createUserProvidedServiceInstanceRepo(endpoint)
+	ts, handler, repo := createUserProvidedServiceInstanceRepo(t, request)
 	defer ts.Close()
 
 	params := map[string]string{
@@ -70,12 +71,12 @@ func TestUpdateUserProvidedServiceInstance(t *testing.T) {
 		"password": "secret",
 	}
 	apiResponse := repo.Update(cf.ServiceInstance{Guid: "my-instance-guid"}, params)
-	assert.True(t, status.Called())
+	assert.True(t, handler.AllRequestsCalled())
 	assert.False(t, apiResponse.IsNotSuccessful())
 }
 
-func createUserProvidedServiceInstanceRepo(endpoint http.HandlerFunc) (ts *httptest.Server, repo UserProvidedServiceInstanceRepository) {
-	ts = httptest.NewTLSServer(endpoint)
+func createUserProvidedServiceInstanceRepo(t *testing.T, request testnet.TestRequest) (ts *httptest.Server, handler *testnet.TestHandler, repo UserProvidedServiceInstanceRepository) {
+	ts, handler = testnet.NewTLSServer(t, []testnet.TestRequest{request})
 
 	config := &configuration.Configuration{
 		AccessToken: "BEARER my_access_token",

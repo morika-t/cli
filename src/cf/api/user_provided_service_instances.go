@@ -29,10 +29,10 @@ func (repo CCUserProvidedServiceInstanceRepository) Create(name string, params m
 	path := fmt.Sprintf("%s/v2/user_provided_service_instances", repo.config.Target)
 
 	type RequestBody struct {
-		Name        	string            `json:"name"`
-		Credentials 	map[string]string `json:"credentials"`
-		SpaceGuid   	string            `json:"space_guid"`
-		SyslogDrainUrl	string			  `json:"syslog_drain_url"`
+		Name           string            `json:"name"`
+		Credentials    map[string]string `json:"credentials"`
+		SpaceGuid      string            `json:"space_guid"`
+		SyslogDrainUrl string            `json:"syslog_drain_url"`
 	}
 
 	reqBody := RequestBody{name, params, repo.config.Space.Guid, sysLogDrainUrl}
