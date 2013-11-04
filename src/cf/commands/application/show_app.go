@@ -89,7 +89,7 @@ func (cmd *ShowApp) Run(c *cli.Context) {
 			fmt.Sprintf("%.1f%%", instance.CpuUsage),
 			fmt.Sprintf("%s of %s", formatters.ByteSize(instance.MemUsage), formatters.ByteSize(instance.MemQuota)),
 			fmt.Sprintf("%s of %s", formatters.ByteSize(instance.DiskUsage), formatters.ByteSize(instance.DiskQuota)),
-      fmt.Sprintf("%s:%d", instance.Host, instance.Port),
+			fmt.Sprintf("%s:%d", instance.Host, instance.Port),
 		})
 	}
 

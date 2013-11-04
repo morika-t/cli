@@ -69,6 +69,8 @@ func TestDisplayingAppSummary(t *testing.T) {
 			CpuUsage:  1.0,
 			DiskQuota: 1 * formatters.GIGABYTE,
 			DiskUsage: 32 * formatters.MEGABYTE,
+			Host:      "192.168.1.200",
+			Port:      12345,
 			MemQuota:  64 * formatters.MEGABYTE,
 			MemUsage:  13 * formatters.BYTE,
 		},
@@ -106,6 +108,7 @@ func TestDisplayingAppSummary(t *testing.T) {
 	assert.Contains(t, ui.Outputs[7], "1.0%")
 	assert.Contains(t, ui.Outputs[7], "13 of 64M")
 	assert.Contains(t, ui.Outputs[7], "32M of 1G")
+	assert.Contains(t, ui.Outputs[7], "192.168.1.200:12345")
 
 	assert.Contains(t, ui.Outputs[8], "#1")
 	assert.Contains(t, ui.Outputs[8], "down")

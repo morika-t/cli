@@ -129,8 +129,8 @@ type StatsApiResponse map[string]InstanceStatsApiResponse
 
 type InstanceStatsApiResponse struct {
 	Stats struct {
-    Host string `json:"host"`
-    Port int `json:"port"`
+		Host      string `json:"host"`
+		Port      int    `json:"port"`
 		DiskQuota uint64 `json:"disk_quota"`
 		MemQuota  uint64 `json:"mem_quota"`
 		Usage     struct {
