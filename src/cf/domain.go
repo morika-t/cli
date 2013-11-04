@@ -100,6 +100,8 @@ type ApplicationInstance struct {
 	Since     time.Time
 	CpuUsage  float64 // percentage
 	DiskQuota uint64  // in bytes
+  Host      string
+  Port      int
 	DiskUsage uint64
 	MemQuota  uint64
 	MemUsage  uint64
